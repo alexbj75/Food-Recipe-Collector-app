@@ -9,7 +9,7 @@ Full-stack recipe collector: paste any online recipe URL, the backend scrapes an
 
 ## Prerequisites
 
-- Node.js 18+
+- Node.js 20.18.1+ (Cheerio/undici dependency chain requires this)
 - MariaDB instance you can reach from where the API runs
 
 ## Setup
