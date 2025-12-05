@@ -93,11 +93,17 @@ async function fetchJson(url, options = {}) {
     headers: { 'Content-Type': 'application/json' },
     ...options
   });
+  if (res.status === 204) return {};
+  let body;
+  try {
+    body = await res.json();
+  } catch (err) {
+    body = {};
+  }
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
     throw new Error(body.message || `Request failed (${res.status})`);
   }
-  return res.json();
+  return body;
 }
 
 async function loadRecipes() {
