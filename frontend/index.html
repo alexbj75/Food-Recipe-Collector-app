@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recipe Vault</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero__content">
+        <div>
+          <p class="eyebrow">Food Recipe Collector</p>
+          <h1>Save every recipe in one modern place.</h1>
+          <p class="lede">
+            Drop any recipe link, we normalize it, store it, and present it in a clean, consistent
+            layout you can browse and filter.
+          </p>
+        </div>
+        <div class="hero__badge">MariaDB-backed · Eyevinn OSC</div>
+      </div>
+    </header>
+
+    <main class="grid">
+      <section class="panel">
+        <div class="panel__header">
+          <div>
+            <p class="eyebrow">Add recipe</p>
+            <h2>Import from URL</h2>
+          </div>
+          <button id="reload-btn" class="ghost-btn">↻ Refresh</button>
+        </div>
+        <form id="add-form" class="stack">
+          <label class="field">
+            <span>Recipe URL</span>
+            <div class="field__row">
+              <input type="url" name="url" placeholder="https://example.com/my-favorite-recipe" required />
+              <button type="submit" class="primary">Save</button>
+            </div>
+          </label>
+          <p class="hint">
+            We fetch structured data (schema.org/Recipe) when available, then clean up formatting.
+          </p>
+          <div id="status" class="status"></div>
+        </form>
+      </section>
+
+      <section class="panel list-panel">
+        <div class="panel__header">
+          <div>
+            <p class="eyebrow">Your collection</p>
+            <h2>Recipes</h2>
+          </div>
+          <div class="filter">
+            <input id="filter" type="text" placeholder="Filter by title or URL" />
+          </div>
+        </div>
+        <ul id="recipes-list" class="recipes-list"></ul>
+      </section>
+
+      <section class="panel detail-panel">
+        <div class="panel__header">
+          <div>
+            <p class="eyebrow">Preview</p>
+            <h2>Unified recipe view</h2>
+          </div>
+        </div>
+        <div id="recipe-detail" class="recipe-detail empty">
+          <p>Select a recipe to see the normalized format.</p>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js" type="module"></script>
+  </body>
+</html>
