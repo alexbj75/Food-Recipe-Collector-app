@@ -4,7 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import recipesRouter from './routes/recipes.js';
 import { config } from './config.js';
-import { initDb } from './db.js';
+import { initDb, isHealthy } from './db.js';
 import { i18nMiddleware } from './i18n.js';
 
 const app = express();
@@ -19,8 +19,11 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '1mb' }));
 app.use(i18nMiddleware);
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok' });
+app.get('/api/health', async (req, res) => {
+  const dbHealthy = await isHealthy();
+  const status = dbHealthy ? 'ok' : 'degraded';
+  const statusCode = dbHealthy ? 200 : 503;
+  res.status(statusCode).json({ status, database: dbHealthy ? 'connected' : 'disconnected' });
 });
 
 app.use('/api/recipes', recipesRouter);
