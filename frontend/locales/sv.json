@@ -22,7 +22,9 @@
   },
   "archived": {
     "eyebrow": "Arkiverade",
-    "title": "Arkiverade recept"
+    "title": "Arkiverade recept",
+    "show": "Visa arkiverade",
+    "hide": "Dölj arkiverade"
   },
   "preview": {
     "eyebrow": "Förhandsgranskning",

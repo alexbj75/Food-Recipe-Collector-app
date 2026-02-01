@@ -22,7 +22,9 @@
   },
   "archived": {
     "eyebrow": "Archived",
-    "title": "Archived recipes"
+    "title": "Archived recipes",
+    "show": "Show archived",
+    "hide": "Hide archived"
   },
   "preview": {
     "eyebrow": "Preview",

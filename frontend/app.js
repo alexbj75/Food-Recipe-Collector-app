@@ -8,14 +8,37 @@ const API_URL = `${apiBase}/api`;
 const listEl = document.getElementById('recipes-list');
 const archivedEl = document.getElementById('archived-list');
 const detailEl = document.getElementById('recipe-detail');
+const archivedDetailEl = document.getElementById('archived-detail');
 const statusEl = document.getElementById('status');
 const filterEl = document.getElementById('filter');
 const reloadBtn = document.getElementById('reload-btn');
 const languageSelect = document.getElementById('language-select');
+const navItems = document.querySelectorAll('.nav-item');
+const views = document.querySelectorAll('.view');
 
 let activeRecipes = [];
 let archivedRecipes = [];
-let selected = null;
+let selectedActive = null;
+let selectedArchived = null;
+
+// View switching
+function switchView(viewName) {
+  views.forEach((view) => view.classList.remove('active'));
+  navItems.forEach((item) => item.classList.remove('active'));
+
+  const targetView = document.getElementById(`view-${viewName}`);
+  const targetNav = document.querySelector(`[data-view="${viewName}"]`);
+
+  if (targetView) targetView.classList.add('active');
+  if (targetNav) targetNav.classList.add('active');
+}
+
+navItems.forEach((item) => {
+  item.addEventListener('click', () => {
+    const viewName = item.getAttribute('data-view');
+    switchView(viewName);
+  });
+});
 
 // Apply translations to all elements with data-i18n attributes
 function applyTranslations() {
@@ -41,9 +64,10 @@ async function handleLanguageChange(lang) {
   await setLanguage(lang);
   applyTranslations();
   // Re-render dynamic content
-  renderList(listEl, activeRecipes, { archived: false });
-  renderList(archivedEl, archivedRecipes, { archived: true });
-  renderDetail(selected);
+  renderList(listEl, activeRecipes, { archived: false, detailEl: detailEl });
+  renderList(archivedEl, archivedRecipes, { archived: true, detailEl: archivedDetailEl });
+  renderDetail(detailEl, selectedActive);
+  renderDetail(archivedDetailEl, selectedArchived);
 }
 
 function setStatus(message, type = 'success') {
@@ -51,7 +75,7 @@ function setStatus(message, type = 'success') {
   statusEl.className = `status ${type}`;
 }
 
-function renderList(container, items, { archived = false } = {}) {
+function renderList(container, items, { archived = false, detailEl } = {}) {
   container.innerHTML = '';
   if (!items.length) {
     container.innerHTML = `<li class="recipe-card">${t('recipeCard.noRecipes')}</li>`;
@@ -77,8 +101,13 @@ function renderList(container, items, { archived = false } = {}) {
 
     li.addEventListener('click', (e) => {
       if (e.target.classList.contains('delete-btn')) return;
-      selected = recipe;
-      renderDetail(recipe);
+      if (archived) {
+        selectedArchived = recipe;
+        renderDetail(archivedDetailEl, recipe);
+      } else {
+        selectedActive = recipe;
+        renderDetail(detailEl, recipe);
+      }
     });
 
     li.querySelector('.delete-btn').addEventListener('click', async (e) => {
@@ -94,14 +123,14 @@ function renderList(container, items, { archived = false } = {}) {
   });
 }
 
-function renderDetail(recipe) {
+function renderDetail(container, recipe) {
   if (!recipe) {
-    detailEl.classList.add('empty');
-    detailEl.innerHTML = `<p>${t('preview.emptyState')}</p>`;
+    container.classList.add('empty');
+    container.innerHTML = `<p>${t('preview.emptyState')}</p>`;
     return;
   }
 
-  detailEl.classList.remove('empty');
+  container.classList.remove('empty');
   const ingredients = recipe.ingredients?.length
     ? recipe.ingredients.map((i) => `<li>${i}</li>`).join('')
     : `<li>${t('recipeDetail.noIngredients')}</li>`;
@@ -109,13 +138,13 @@ function renderDetail(recipe) {
     ? recipe.instructions.map((i) => `<li>${i}</li>`).join('')
     : `<li>${t('recipeDetail.noInstructions')}</li>`;
 
-  detailEl.innerHTML = `
+  container.innerHTML = `
     <div class="header">
       <h3>${recipe.title}</h3>
       ${recipe.sourceUrl ? `<p class="recipe-card__meta"><a href="${recipe.sourceUrl}" target="_blank" rel="noreferrer">${recipe.sourceUrl}</a></p>` : ''}
     </div>
     <div class="edit-toggle">
-      <button id="edit-toggle-btn" class="icon-btn" type="button">${t('recipeDetail.edit')}</button>
+      <button id="edit-toggle-btn-${recipe.id}" class="icon-btn" type="button">${t('recipeDetail.edit')}</button>
     </div>
     <div class="meta-grid">
       ${recipe.totalTime ? `<span class="pill">⏱️ ${t('recipeDetail.total')}: ${recipe.totalTime}</span>` : ''}
@@ -124,9 +153,9 @@ function renderDetail(recipe) {
       ${recipe.servings ? `<span class="pill">🍽 ${t('recipeDetail.servings')}: ${recipe.servings}</span>` : ''}
     </div>
     ${recipe.description ? `<p>${recipe.description}</p>` : ''}
-    <div id="edit-container" style="display:none;">
+    <div id="edit-container-${recipe.id}" style="display:none;">
       <div class="section-title">${t('recipeDetail.editTitle')}</div>
-      <form id="edit-form" class="stack">
+      <form id="edit-form-${recipe.id}" class="stack">
         <input name="title" type="text" value="${recipe.title}" required />
         <textarea name="description" rows="3" placeholder="${t('recipeDetail.descriptionPlaceholder')}">${recipe.description || ''}</textarea>
         <div class="field__row">
@@ -149,13 +178,13 @@ function renderDetail(recipe) {
     <ol class="instructions">${instructions}</ol>
   `;
 
-  const editContainer = document.getElementById('edit-container');
-  const editToggleBtn = document.getElementById('edit-toggle-btn');
+  const editContainer = document.getElementById(`edit-container-${recipe.id}`);
+  const editToggleBtn = document.getElementById(`edit-toggle-btn-${recipe.id}`);
   editToggleBtn.addEventListener('click', () => {
     editContainer.style.display = editContainer.style.display === 'none' ? 'block' : 'none';
   });
 
-  const editForm = document.getElementById('edit-form');
+  const editForm = document.getElementById(`edit-form-${recipe.id}`);
   editForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(editForm);
@@ -209,12 +238,20 @@ async function loadRecipes() {
     );
     activeRecipes = active;
     archivedRecipes = archived;
-    renderList(listEl, activeRecipes, { archived: false });
-    renderList(archivedEl, archivedRecipes, { archived: true });
-    if (!selected || (selected.archivedAt && !archivedRecipes.find((r) => r.id === selected.id))) {
-      selected = activeRecipes[0] || archivedRecipes[0] || null;
+    renderList(listEl, activeRecipes, { archived: false, detailEl: detailEl });
+    renderList(archivedEl, archivedRecipes, { archived: true, detailEl: archivedDetailEl });
+
+    // Update selected if needed
+    if (!selectedActive || !activeRecipes.find((r) => r.id === selectedActive.id)) {
+      selectedActive = activeRecipes[0] || null;
     }
-    renderDetail(selected);
+    if (!selectedArchived || !archivedRecipes.find((r) => r.id === selectedArchived.id)) {
+      selectedArchived = archivedRecipes[0] || null;
+    }
+
+    renderDetail(detailEl, selectedActive);
+    renderDetail(archivedDetailEl, selectedArchived);
+
     const total = activeRecipes.length + archivedRecipes.length;
     const statusKey = total === 1 ? 'status.loadedSingular' : 'status.loaded';
     setStatus(t(statusKey, { active: activeRecipes.length, archived: archivedRecipes.length }));
@@ -226,7 +263,7 @@ async function loadRecipes() {
 async function archiveRecipe(id) {
   try {
     await fetchJson(`${API_URL}/recipes/${id}/archive`, { method: 'POST' });
-    selected = null;
+    selectedActive = null;
     await loadRecipes();
     setStatus(t('status.archived'));
   } catch (err) {
@@ -237,7 +274,7 @@ async function archiveRecipe(id) {
 async function unarchiveRecipe(id) {
   try {
     await fetchJson(`${API_URL}/recipes/${id}/unarchive`, { method: 'POST' });
-    selected = null;
+    selectedArchived = null;
     await loadRecipes();
     setStatus(t('status.unarchived'));
   } catch (err) {
@@ -251,7 +288,13 @@ async function updateRecipe(id, payload) {
       method: 'PUT',
       body: JSON.stringify(payload)
     });
-    selected = data.recipe;
+    // Update appropriate selected recipe
+    if (selectedActive && selectedActive.id === id) {
+      selectedActive = data.recipe;
+    }
+    if (selectedArchived && selectedArchived.id === id) {
+      selectedArchived = data.recipe;
+    }
     await loadRecipes();
     setStatus(t('status.updated'));
   } catch (err) {
@@ -269,10 +312,12 @@ document.getElementById('add-form').addEventListener('submit', async (e) => {
       method: 'POST',
       body: JSON.stringify({ url })
     });
-    selected = data.recipe || data;
+    selectedActive = data.recipe || data;
     e.target.reset();
     await loadRecipes();
     setStatus(data.message || t('status.saved'));
+    // Switch to collection view to see the new recipe
+    switchView('collection');
   } catch (err) {
     setStatus(err.message, 'error');
   }
