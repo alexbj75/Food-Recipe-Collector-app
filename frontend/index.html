@@ -7,17 +7,27 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header class="hero">
-      <div class="hero__content">
-        <div>
-          <p class="eyebrow" data-i18n="hero.eyebrow">Food Recipe Collector</p>
-          <h1 data-i18n="hero.title">Save every recipe in one modern place.</h1>
-          <p class="lede" data-i18n="hero.description">
-            Drop any recipe link, we normalize it, store it, and present it in a clean, consistent
-            layout you can browse and filter.
-          </p>
+    <div class="app-layout">
+      <aside class="sidebar">
+        <div class="sidebar__header">
+          <h1 data-i18n="hero.title">Recipe Vault</h1>
+          <p class="hero__badge" data-i18n="hero.badge">MariaDB-backed · Eyevinn OSC</p>
         </div>
-        <div class="hero__actions">
+        <nav class="sidebar__nav">
+          <button class="nav-item active" data-view="collection">
+            <span class="nav-icon">📚</span>
+            <span data-i18n="collection.title">Recipes</span>
+          </button>
+          <button class="nav-item" data-view="add">
+            <span class="nav-icon">➕</span>
+            <span data-i18n="addRecipe.eyebrow">Add recipe</span>
+          </button>
+          <button class="nav-item" data-view="archived">
+            <span class="nav-icon">🗄️</span>
+            <span data-i18n="archived.title">Archived recipes</span>
+          </button>
+        </nav>
+        <div class="sidebar__footer">
           <div class="language-switcher">
             <label for="language-select" data-i18n="language.select">Language</label>
             <select id="language-select">
@@ -25,70 +35,94 @@
               <option value="sv">Svenska</option>
             </select>
           </div>
-          <div class="hero__badge" data-i18n="hero.badge">MariaDB-backed · Eyevinn OSC</div>
         </div>
-      </div>
-    </header>
+      </aside>
 
-    <main class="grid">
-      <section class="panel">
-        <div class="panel__header">
-          <div>
-            <p class="eyebrow" data-i18n="addRecipe.eyebrow">Add recipe</p>
-            <h2 data-i18n="addRecipe.title">Import from URL</h2>
-          </div>
-          <button id="reload-btn" class="ghost-btn" data-i18n="addRecipe.refresh">↻ Refresh</button>
-        </div>
-        <form id="add-form" class="stack">
-          <label class="field">
-            <span data-i18n="addRecipe.urlLabel">Recipe URL</span>
-            <div class="field__row">
-              <input type="url" name="url" data-i18n-placeholder="addRecipe.urlPlaceholder" placeholder="https://example.com/my-favorite-recipe" required />
-              <button type="submit" class="primary" data-i18n="addRecipe.save">Save</button>
+      <main class="main-content">
+        <!-- Collection View -->
+        <section id="view-collection" class="view active">
+          <div class="view__header">
+            <div>
+              <p class="eyebrow" data-i18n="collection.eyebrow">Your collection</p>
+              <h2 data-i18n="collection.title">Recipes</h2>
             </div>
-          </label>
-          <p class="hint" data-i18n="addRecipe.hint">
-            We fetch structured data (schema.org/Recipe) when available, then clean up formatting.
-          </p>
-          <div id="status" class="status"></div>
-        </form>
-      </section>
+            <div class="view__actions">
+              <div class="filter">
+                <input id="filter" type="text" data-i18n-placeholder="collection.filterPlaceholder" placeholder="Filter by title or URL" />
+              </div>
+              <button id="reload-btn" class="ghost-btn" data-i18n="addRecipe.refresh">↻ Refresh</button>
+            </div>
+          </div>
+          <div class="collection-layout">
+            <div class="panel list-panel">
+              <ul id="recipes-list" class="recipes-list"></ul>
+            </div>
+            <div class="panel detail-panel">
+              <div class="panel__header">
+                <div>
+                  <p class="eyebrow" data-i18n="preview.eyebrow">Preview</p>
+                  <h2 data-i18n="preview.title">Unified recipe view</h2>
+                </div>
+              </div>
+              <div id="recipe-detail" class="recipe-detail empty">
+                <p data-i18n="preview.emptyState">Select a recipe to see the normalized format.</p>
+              </div>
+            </div>
+          </div>
+        </section>
 
-      <section class="panel list-panel">
-        <div class="panel__header">
-          <div>
-            <p class="eyebrow" data-i18n="collection.eyebrow">Your collection</p>
-            <h2 data-i18n="collection.title">Recipes</h2>
+        <!-- Add Recipe View -->
+        <section id="view-add" class="view">
+          <div class="view__header">
+            <div>
+              <p class="eyebrow" data-i18n="addRecipe.eyebrow">Add recipe</p>
+              <h2 data-i18n="addRecipe.title">Import from URL</h2>
+            </div>
           </div>
-          <div class="filter">
-            <input id="filter" type="text" data-i18n-placeholder="collection.filterPlaceholder" placeholder="Filter by title or URL" />
+          <div class="panel add-panel">
+            <form id="add-form" class="stack">
+              <label class="field">
+                <span data-i18n="addRecipe.urlLabel">Recipe URL</span>
+                <div class="field__row">
+                  <input type="url" name="url" data-i18n-placeholder="addRecipe.urlPlaceholder" placeholder="https://example.com/my-favorite-recipe" required />
+                  <button type="submit" class="primary" data-i18n="addRecipe.save">Save</button>
+                </div>
+              </label>
+              <p class="hint" data-i18n="addRecipe.hint">
+                We fetch structured data (schema.org/Recipe) when available, then clean up formatting.
+              </p>
+              <div id="status" class="status"></div>
+            </form>
           </div>
-        </div>
-        <ul id="recipes-list" class="recipes-list"></ul>
-      </section>
+        </section>
 
-      <section class="panel list-panel">
-        <div class="panel__header">
-          <div>
-            <p class="eyebrow" data-i18n="archived.eyebrow">Archived</p>
-            <h2 data-i18n="archived.title">Archived recipes</h2>
+        <!-- Archived View -->
+        <section id="view-archived" class="view">
+          <div class="view__header">
+            <div>
+              <p class="eyebrow" data-i18n="archived.eyebrow">Archived</p>
+              <h2 data-i18n="archived.title">Archived recipes</h2>
+            </div>
           </div>
-        </div>
-        <ul id="archived-list" class="recipes-list"></ul>
-      </section>
-
-      <section class="panel detail-panel">
-        <div class="panel__header">
-          <div>
-            <p class="eyebrow" data-i18n="preview.eyebrow">Preview</p>
-            <h2 data-i18n="preview.title">Unified recipe view</h2>
+          <div class="collection-layout">
+            <div class="panel list-panel">
+              <ul id="archived-list" class="recipes-list"></ul>
+            </div>
+            <div class="panel detail-panel">
+              <div class="panel__header">
+                <div>
+                  <p class="eyebrow" data-i18n="preview.eyebrow">Preview</p>
+                  <h2 data-i18n="preview.title">Unified recipe view</h2>
+                </div>
+              </div>
+              <div id="archived-detail" class="recipe-detail empty">
+                <p data-i18n="preview.emptyState">Select a recipe to see the normalized format.</p>
+              </div>
+            </div>
           </div>
-        </div>
-        <div id="recipe-detail" class="recipe-detail empty">
-          <p data-i18n="preview.emptyState">Select a recipe to see the normalized format.</p>
-        </div>
-      </section>
-    </main>
+        </section>
+      </main>
+    </div>
 
     <script src="app.js" type="module"></script>
   </body>
